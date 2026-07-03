@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Progreso público de recaudación para Abrazo Solidario para Junelly."
+    >
+    <title>Abrazo Solidario para Junelly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Inicio">
+        <span>Abrazo Solidario Junelly</span>
+      </a>
+      <nav class="header-nav" aria-label="Navegación principal">
+        <a href="index.html">Progreso</a>
+        <a href="donar.html">Donar</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero-grid" id="progreso">
+        <article class="progress-card" aria-label="Progreso de recaudación">
+          <p class="eyebrow">Progreso de la causa</p>
+          <h1>Abrazo Solidario para Junelly</h1>
+          <p class="hero-subtitle">En pie de lucha contra el cáncer</p>
+
+          <div class="amount-row">
+            <div>
+              <span class="label">Recaudado</span>
+              <strong id="raised-amount">$0</strong>
+            </div>
+            <div>
+              <span class="label">Meta</span>
+              <strong id="goal-amount">$0</strong>
+            </div>
+          </div>
+
+          <div class="progress-meta">
+            <span id="progress-percent">0%</span>
+            <span id="donation-count">0 aportaciones</span>
+          </div>
+
+          <div class="progress-track" id="progress-track" aria-label="Barra de progreso">
+            <div class="progress-fill" id="progress-fill"></div>
+            <div class="milestones" id="milestones"></div>
+          </div>
+        </article>
+
+        <section class="gallery-card" aria-label="Galería de la causa">
+          <div class="media-frame" id="media-frame"></div>
+          <div class="thumbnail-row" id="thumbnail-row"></div>
+        </section>
+      </section>
+
+      <section class="donations-section" aria-label="Lista de donaciones">
+        <div class="section-title">
+          <h2>Donaciones recientes</h2>
+        </div>
+        <div class="donations-list" id="donations-list"></div>
+        <div class="pagination-bar">
+          <p id="pagination-summary">Mostrando aportaciones.</p>
+          <div class="pagination-actions">
+            <button class="pager-button" type="button" id="prev-page">Anterior</button>
+            <button class="pager-button" type="button" id="next-page">Siguiente</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>Abrazo Solidario Junelly</strong>
+        <p>En pie de lucha contra el cáncer</p>
+      </div>
+      <address class="footer-contact">
+        <span>Contacto</span>
+        <a href="https://wa.me/17876884974">WhatsApp: 787-688-4974</a>
+        <a href="mailto:janjannunez777@gmail.com">Email: janjannunez777@gmail.com</a>
+      </address>
+      <p class="copyright">© 2026 Abrazo Solidario Junelly</p>
+    </footer>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
