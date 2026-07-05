@@ -1,34 +1,27 @@
-# Dashboard administrativo
+# Admin Dashboard
 
-El dashboard administrativo se implementa con Google Sheets + Apps Script. Esta decision permite operar el evento con una herramienta familiar, bajo costo y capacidad de correccion manual sin desarrollar una aplicacion administrativa completa desde cero.
+The admin dashboard is implemented with Google Sheets and Google Apps Script. This keeps operations accessible to non-engineering users while avoiding the cost and complexity of a custom admin application.
 
-## Funcionalidades
+## Responsibilities
 
-- Numeros confirmados.
-- Registros pendientes.
-- Donaciones/pagos.
-- Asignacion manual.
-- Correccion de participante.
-- Correccion de telefono ATH.
-- Anular o ignorar registro duplicado.
-- Quemar numero confirmado duplicado.
-- Logs/auditoria.
-- Graficas operacionales.
+- Review incoming registrations.
+- Track confirmed participants.
+- Review donations and payment events.
+- Match donations to registrations.
+- Assign runner numbers.
+- Correct participant information.
+- Handle duplicate registrations.
+- Void or burn runner numbers when needed.
+- Generate or track pickup codes.
+- Trigger or review email confirmation batches.
+- Keep audit-friendly correction history.
 
-## Por que Google Sheets
+## Why Google Sheets
 
-Google Sheets permite que el equipo vea datos rapidamente, filtre casos, revise excepciones y haga correcciones con poca capacitacion. Apps Script agrega botones, menus y automatizaciones sin agregar infraestructura pesada.
+Google Sheets is familiar, fast to modify, and practical for event operations. It allows admins to filter, review, correct, and coordinate records without needing a custom back-office UI.
 
-## Operacion manual controlada
+Apps Script extends Sheets with dashboard actions, automation, and integration points to backend functions.
 
-Las correcciones manuales son necesarias porque los datos de formularios y pagos pueden llegar incompletos, duplicados o con errores. El sistema debe hacer facil corregir sin perder trazabilidad.
+## Privacy
 
-## Placeholders de screenshots
-
-Pendiente: agregar capturas con datos ficticios de:
-
-- Vista de registros pendientes.
-- Vista de pagos no pareados.
-- Vista de numeros confirmados.
-- Vista de logs/auditoria.
-- Vista de graficas.
+The admin dashboard contains operational data and should remain private. Public screenshots should only be included if fully sanitized and stripped of private participant or donor information.

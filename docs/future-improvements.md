@@ -1,15 +1,13 @@
-# Mejoras futuras
+# Future Improvements
 
-- API publica real para progreso de donaciones.
-- Risk scoring para pareos sospechosos.
-- Campo opcional de consentimiento para mostrar nombre del donante.
-- Mejor UI para reenviar emails.
-- Reportes de auditoria.
-- Exportar reportes.
-- Monitoreo automatico de costos.
-- Mejor verificacion de identidad sin aumentar demasiada friccion.
-- Mejor manejo de dominios/links.
-- CI/CD para deployment.
-- Capturas publicas con datos ficticios para documentar el dashboard.
-- Alertas para pagos no pareados por demasiado tiempo.
-- Retencion configurable para logs operacionales.
+- Optional donor consent for public display names.
+- More advanced analytics for donations and registrations.
+- Better admin reporting.
+- Automated public image generation for social media sharing.
+- Improved API caching and monitoring.
+- CI/CD improvements for backend and frontend deployment.
+- Stronger operational alerts for unmatched payments.
+- Better duplicate detection tools.
+- More detailed audit report exports.
+- Cost monitoring for serverless and email usage.
+- Improved dashboard ergonomics for high-volume event days.

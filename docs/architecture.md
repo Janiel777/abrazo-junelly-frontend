@@ -1,58 +1,53 @@
-# Arquitectura del sistema
+# System Architecture
 
-Este documento describe la arquitectura general del sistema de inscripcion y donaciones de Abrazo Solidario para Junelly. El repositorio publico contiene solo el frontend y documentacion de case study; el backend real no esta incluido por seguridad y privacidad.
+Abrazo Solidario Junelly is a production community fundraising and 5K registration platform. The public repository contains the frontend and documentation, while the private backend and operational data are intentionally kept out of the public repo.
 
 ```mermaid
 flowchart TD
-  A[Google Form] --> B[Google Sheets]
-  B --> C[Apps Script]
-  C --> D[Firebase Cloud Functions]
-  D --> E[Firestore]
-  D --> F[Automatizacion de emails]
-  B --> G[Dashboard administrativo]
-  E --> H[API publica read-only]
-  H --> I[Frontend de progreso]
-  J[Webhooks ATH Movil] --> D
+  donor[User / Donor] --> ath[ATH Movil / Aporta]
+  ath --> webhook[Firebase Cloud Functions webhook]
+  webhook --> firestore[(Firestore)]
+
+  participant[Participant] --> form[Google Form]
+  form --> sheets[Google Sheets dashboard]
+  sheets --> apps[Google Apps Script]
+  apps --> functions[Firebase Cloud Functions]
+  functions --> firestore
+
+  firestore --> api[Public read-only API]
+  api --> frontend[GitHub Pages frontend]
+  frontend --> visitor[Public visitor]
+
+  functions --> emailProvider[Email provider]
+  emailProvider --> emails[Confirmation emails]
 ```
 
-## Componentes
+## Public Frontend
 
-### Google Forms
+The frontend is a static site hosted on GitHub Pages with a custom domain. It shows fundraising progress, a media gallery, donation instructions, and a paginated grid of sanitized public donations.
 
-Google Forms reduce friccion para participantes y permite capturar registros rapidamente sin construir un formulario administrativo desde cero.
+The browser only calls the public read-only API. It does not connect directly to Firestore and does not include Firebase credentials.
 
-### Google Sheets
+## Registration Intake
 
-Google Sheets funciona como dashboard operacional porque es familiar, facil de auditar manualmente y suficientemente flexible para un evento comunitario.
+Google Forms provides a low-friction registration flow for participants. Form submissions are routed into Google Sheets, where the operations team can review records and trigger administrative actions.
 
-### Apps Script
+## Admin Dashboard
 
-Apps Script automatiza acciones desde el dashboard, como correcciones, asignaciones manuales, cambios de estado y tareas administrativas.
+Google Sheets works as the operational dashboard. Apps Script adds automation for correction workflows, runner number assignment, duplicate handling, manual review, and dashboard actions.
 
-### Firebase Cloud Functions
+## Backend
 
-Cloud Functions contiene la logica serverless para procesar eventos, recibir webhooks, validar datos, coordinar actualizaciones y preparar respuestas para otros servicios.
+Firebase Cloud Functions Gen 2 handles webhook processing, API routes, matching logic, email workflows, correction actions, and integration with Firestore.
 
-### Firestore
+## Database
 
-Firestore almacena registros, donaciones, estados, auditoria y datos operacionales. No se expone directamente al frontend publico.
+Firestore stores registrations, donations, public summary data, email batches, audit logs, and operational state. Private collections and sensitive fields are not exposed to the public frontend.
 
-### Webhooks de ATH Movil
+## Payment / Donation Webhooks
 
-Los webhooks notifican pagos o donaciones para que el sistema pueda intentar parearlos con registros existentes y actualizar estados.
+ATH Movil / Aporta webhook events are processed by backend functions. Donations can be matched to registrations, stored as extra donations, or marked for manual review depending on available information.
 
-### Automatizacion de emails
+## Public API
 
-Los emails automaticos comunican confirmaciones y estados importantes. El proveedor real y sus credenciales no pertenecen al repositorio publico.
-
-### Dashboard administrativo
-
-El dashboard permite revisar confirmaciones, pagos no pareados, duplicados, asignaciones manuales y correcciones de datos.
-
-### API publica read-only
-
-La API futura debe devolver solo datos agregados y sanitizados, sin informacion privada de participantes, telefonos, emails o referencias de pago.
-
-### Frontend de progreso
-
-El frontend es una pagina estatica que muestra el progreso de la causa y sirve como presentacion publica del proyecto.
+The public API returns sanitized aggregate data and paginated donation records. It is designed for public read-only access and excludes private operational data.

@@ -1,35 +1,46 @@
-# Seguridad y tradeoffs
+# Security and Privacy Tradeoffs
 
-Este sistema fue disenado para un contexto comunitario y benefico, donde reducir friccion es importante. Algunas decisiones priorizan facilidad de uso, costo bajo y operacion rapida, pero los riesgos se documentan y se mitigan con herramientas administrativas.
+Abrazo Solidario Junelly was designed for a community charity event where usability, low cost, and operational speed matter. The system separates public information from private operational data and documents deliberate tradeoffs.
 
-## Tradeoff principal: pareo por telefono ATH Movil
+## Public / Private Separation
 
-El sistema parea un registro con una donacion usando el numero de telefono ATH Movil que la persona escribe en el Google Form y que luego llega desde el webhook de pago.
+The public frontend never connects directly to Firestore. It consumes a public read-only API that returns sanitized aggregate data and paginated public donation records.
 
-Esto reduce friccion porque no obliga a crear cuentas, passwords, codigos complejos o pasos adicionales para participantes. Para un evento comunitario, ese flujo puede funcionar muy bien.
+The private backend, dashboard workflows, payment processing details, and operational records remain outside the public repository.
 
-El riesgo conocido es que una persona podria escribir el telefono ATH de otra persona y accidentalmente o intencionalmente quedar pareada con la donacion de esa persona. Este riesgo no se ignora: es un tradeoff deliberado de bajo-friccion que se maneja con supervision administrativa.
+## Public API Safety
 
-## Mitigaciones
+The public API should only expose fields that are safe for public display:
 
-- Dashboard administrativo para revisar estados.
-- Correcciones manuales de participante y telefono ATH.
-- Deteccion de duplicados.
-- Logs de auditoria para acciones importantes.
-- Herramientas de asignacion manual.
-- Capacidad de anular o quemar numeros confirmados duplicados.
-- Revision de pagos no pareados.
-- No exponer datos privados en el frontend publico.
-- API publica limitada a datos sanitizados y agregados.
+- fundraising total
+- goal
+- progress percent
+- milestone status
+- contribution count
+- shortened or anonymous donor display names
+- sanitized public messages
+- pagination metadata
 
-## Datos privados
+The API must not expose emails, phone numbers, ATH phone numbers, reference numbers, registration IDs, pickup codes, internal notes, service account data, or dashboard-only fields.
 
-El frontend publico no debe mostrar emails, telefonos, referencias de pago, IDs reales de ATH, logs privados, credenciales de Firebase ni informacion sensible de participantes o donantes.
+## Matching Tradeoff
 
-## Acceso directo a base de datos
+The production system uses a low-friction matching approach appropriate for a community event. Matching donations to registrations reduces manual work, but ambiguous cases must be reviewable by admins.
 
-El navegador no debe conectarse directamente a Firestore. La ruta publica correcta es una API read-only que controle que datos salen del sistema.
+This is a deliberate operational tradeoff: the system avoids forcing participants into a heavy account or identity flow while still providing manual correction tools, audit logs, and duplicate handling.
 
-## Auditoria
+## Mitigations
 
-Las correcciones manuales deben guardar quien hizo la accion, que cambio, cuando ocurrio y por que fue necesario cuando aplique. Esto ayuda a mantener confianza y trazabilidad durante la operacion del evento.
+- Private admin dashboard.
+- Manual correction workflows.
+- Duplicate detection and review.
+- Audit logs and correction history.
+- Ability to void or burn runner numbers.
+- Review of unmatched or ambiguous donations.
+- Public API sanitization.
+- No secrets in the frontend.
+- No direct Firestore access from the browser.
+
+## Secrets
+
+Secrets belong in backend environment configuration or secret management. They must not be committed to the frontend repository.

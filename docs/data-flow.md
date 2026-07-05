@@ -1,29 +1,35 @@
-# Flujos de datos
+# Data Flow
 
-## 1. Flujo de registro
+This document summarizes the primary production flows for the Abrazo Solidario Junelly platform.
 
-Una persona completa el Google Form con sus datos de participante. El registro llega a Google Sheets y queda disponible para revision operacional. El sistema puede crear o actualizar un registro en Firestore mediante Apps Script y Firebase Cloud Functions.
+## 1. Registration Flow
 
-## 2. Flujo de webhook de donacion/pago
+A participant submits a registration through Google Forms. The response lands in Google Sheets, where the admin dashboard can review, correct, and process the registration. Apps Script and Cloud Functions coordinate persistence and operational state in Firestore.
 
-ATH Movil envia un webhook al backend serverless cuando ocurre una donacion o pago. Firebase Cloud Functions recibe el evento, lo normaliza y lo guarda para procesamiento y auditoria.
+## 2. Donation / Payment Webhook Flow
 
-## 3. Flujo de pareo entre donacion y registro
+ATH Movil / Aporta sends donation or payment events to a Firebase Cloud Functions webhook. The backend normalizes the event, stores the donation record, and decides whether it can be matched automatically or needs manual review.
 
-El sistema intenta parear la donacion con un registro usando el telefono ATH Movil provisto por la persona en el formulario y el telefono recibido desde el webhook. Si el pareo es claro, se marca el registro como confirmado. Si hay ambiguedad, queda para revision manual.
+## 3. Donation-to-Registration Matching
 
-## 4. Flujo de email de confirmacion
+The backend attempts to match a donation to a registration using the approved operational matching strategy. Clear matches can confirm participants automatically. Ambiguous or conflicting records are routed to manual review through the admin dashboard.
 
-Cuando un registro se confirma, el sistema dispara un email automatico con la informacion correspondiente. El email no se envia desde el frontend publico y ninguna credencial del proveedor de email se guarda en este repositorio.
+## 4. Runner Number Assignment
 
-## 5. Flujo de correccion administrativa
+Confirmed registrations can receive runner numbers automatically. Admin workflows support manual assignment, correction, and voiding or burning numbers when duplicate or invalid records need to be handled safely.
 
-El equipo administrativo puede corregir nombre, telefono ATH, estado de pago, participante asociado o numero de corredor desde el dashboard de Google Sheets + Apps Script. Las acciones importantes deben quedar registradas en logs de auditoria.
+## 5. Email Confirmation Flow
 
-## 6. Flujo de manejo de duplicados
+Once a participant is confirmed, the backend can queue and send confirmation emails through a provider-backed email workflow. Email batches are tracked so the operations team can review delivery and resend when needed.
 
-Cuando existen registros duplicados, el dashboard permite decidir cual registro queda activo, cual se ignora y si un numero de corredor ya confirmado debe anularse o quemarse para evitar conflictos.
+## 6. Manual Correction Flow
 
-## 7. Flujo de pagina publica de progreso
+Admins can correct participant names, matching fields, confirmation states, runner numbers, and related operational details from the dashboard. Corrections should be audit-friendly and traceable.
 
-El frontend publico usa datos locales de ejemplo mientras no exista API. En produccion, debe consultar una API publica read-only que devuelva totales agregados y mensajes aprobados, sin exponer datos privados ni acceso directo a Firestore.
+## 7. Duplicate Handling Flow
+
+Duplicate registrations are detected and handled through dashboard workflows. The system supports ignoring invalid duplicates, correcting the active registration, and voiding or burning already assigned runner numbers when necessary.
+
+## 8. Public Progress Flow
+
+Firestore data is summarized through a public read-only API. The frontend consumes the sanitized summary and paginated donation list to display public progress without exposing private backend data.
