@@ -229,7 +229,8 @@ The screenshots below show sanitized evidence of the operational dashboard built
 
 ### Public Progress Page
 
-![Public progress page](assets/5k_Donacion_Junelly.PNG)
+<img width="2534" height="1241" alt="image" src="https://github.com/user-attachments/assets/3a710096-b6e4-485b-bbd4-ebba41bee056" />
+
 
 ### Admin Dashboard Overview
 
