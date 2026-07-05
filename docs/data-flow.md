@@ -8,7 +8,7 @@ A participant submits a registration through Google Forms. The response lands in
 
 ## 2. Donation / Payment Webhook Flow
 
-ATH Movil / Aporta sends donation or payment events to a Firebase Cloud Functions webhook. The backend normalizes the event, stores the donation record, and decides whether it can be matched automatically or needs manual review.
+ATH Movil sends donation or payment events to a Firebase Cloud Functions webhook. The backend normalizes the event, stores the donation record, and decides whether it can be matched automatically or needs manual review.
 
 ## 3. Donation-to-Registration Matching
 
@@ -25,6 +25,8 @@ Once a participant is confirmed, the backend can queue and send confirmation ema
 ## 6. Manual Correction Flow
 
 Admins can correct participant names, matching fields, confirmation states, runner numbers, and related operational details from the dashboard. Corrections should be audit-friendly and traceable.
+
+The Google Sheets dashboard uses Apps Script controls to run selected queries and trigger Firebase Cloud Functions. This keeps Firestore edits behind controlled backend workflows instead of asking operators to edit database records directly.
 
 ## 7. Duplicate Handling Flow
 

@@ -2,18 +2,18 @@
 
 > A production charity fundraising and 5K registration platform built with a serverless, low-cost architecture.
 
-## Live Demo
+## Live Site
 
-- Live site: [https://abrazojunelly.org](https://abrazojunelly.org)
+- Public site: [https://abrazojunelly.org](https://abrazojunelly.org)
 - Public frontend repository: [Janiel777/abrazo-junelly-frontend](https://github.com/Janiel777/abrazo-junelly-frontend)
 
-The public website is in Spanish because it serves a Puerto Rico community audience. The repository documentation is in English for recruiters, hiring managers, and technical reviewers.
+The public website is in Spanish because it serves a Puerto Rico community audience. This repository documentation is in English for recruiters, hiring managers, and technical reviewers.
 
 ## Overview
 
 Abrazo Solidario Junelly is a real-world platform built for a community charity 5K event in Puerto Rico. The system supports public fundraising progress, participant registration operations, donation processing, runner number assignment, confirmation emails, manual corrections, and privacy-conscious public reporting.
 
-This public repository contains the static frontend, public assets, fallback sample data, public API integration logic, README, and technical case-study documentation. The production backend, private operational workflows, credentials, and real private records are intentionally not included.
+This public repository contains the static frontend, public assets, fallback sample data, public API integration logic, README, and technical documentation. The production backend, private operational workflows, credentials, and real private records are intentionally not included.
 
 ## Problem
 
@@ -26,14 +26,15 @@ The workflow also needed to handle real operational edge cases: duplicate regist
 The complete system combines practical operational tools with serverless backend services:
 
 - Google Forms captures participant registration intake.
-- Google Sheets acts as the admin dashboard for operational review.
-- Google Apps Script automates dashboard actions and correction workflows.
-- Firebase Cloud Functions Gen 2 handles backend logic, public APIs, webhooks, and email workflows.
+- Google Sheets acts as an interactive operational dashboard.
+- Google Apps Script automates dashboard actions and controlled admin workflows.
+- Firebase Cloud Functions Gen 2 handles backend logic, public APIs, donation webhooks, Firestore updates, and email workflows.
 - Firestore stores registrations, donations, audit logs, email batches, and operational state.
-- ATH Movil / Aporta webhook processing records donation events.
+- ATH Movil webhook processing records donation events.
 - Automated matching pairs donations with registrations when possible.
-- Email automation sends confirmation and operational messages.
+- Resend sends confirmation emails and operational email batches.
 - GitHub Pages hosts the public fundraising progress website on a custom domain.
+- AWS Route 53 manages the hosted zone and DNS records for the custom domain.
 
 ## Key Features
 
@@ -49,8 +50,9 @@ The complete system combines practical operational tools with serverless backend
 - Duplicate and voided registration handling.
 - Burned runner number support for operational consistency.
 - Pickup code generation.
-- Email confirmation batches.
+- Email confirmation batches through Resend.
 - Admin dashboard through Google Sheets and Apps Script.
+- Controlled dashboard interactions that call Firebase Cloud Functions to update Firestore.
 - Audit-friendly operational records and correction history.
 - Privacy-conscious public API with no direct database exposure.
 
@@ -83,7 +85,7 @@ The complete system combines practical operational tools with serverless backend
 
 ### Payments / Donations
 
-- ATH Movil / Aporta webhook flow
+- ATH Movil webhook flow
 - Payment and donation event processing
 - Donation-to-registration matching
 - Extra donation handling
@@ -91,16 +93,17 @@ The complete system combines practical operational tools with serverless backend
 
 ### Email
 
-- Automated confirmation emails
+- Resend for automated confirmation emails
 - Email batch processing
 - Provider-backed email delivery
+- AWS SES evaluated as a lower-cost pay-as-you-go migration path
 
-### Deployment / Infrastructure
+### Infrastructure
 
-- GitHub Pages
+- GitHub Pages for the public frontend
+- AWS Route 53 hosted zone and DNS records for `abrazojunelly.org`
 - Firebase Hosting redirects and branded links
-- Custom domain / DNS
-- Serverless deployment
+- Firebase Cloud Functions deployment for backend services
 - Low-cost nonprofit-oriented architecture
 
 ### Security / Privacy
@@ -117,22 +120,28 @@ The complete system combines practical operational tools with serverless backend
 
 ```mermaid
 flowchart TD
-  donor[User / Donor] --> ath[ATH Movil / Aporta]
+  donor[User / Donor] --> ath[ATH Movil]
   ath --> webhook[Firebase Cloud Functions webhook]
   webhook --> firestore[(Firestore)]
 
   participant[Participant] --> form[Google Form]
-  form --> sheets[Google Sheets]
-  sheets --> apps[Apps Script dashboard]
+  form --> sheets[Google Sheets dashboard]
+  sheets --> apps[Google Apps Script]
   apps --> functions[Firebase Cloud Functions]
   functions --> firestore
+
+  sheets --> dashboardActions[Controlled dashboard actions]
+  dashboardActions --> functions
 
   firestore --> api[Public read-only API]
   api --> frontend[GitHub Pages frontend]
   frontend --> visitor[Public visitor]
 
-  functions --> emailProvider[Email provider]
-  emailProvider --> emails[Confirmation emails]
+  functions --> resend[Resend]
+  resend --> emails[Confirmation emails]
+
+  route53[AWS Route 53 DNS] --> domain[abrazojunelly.org]
+  domain --> frontend
 ```
 
 ## Repository Scope
@@ -145,6 +154,7 @@ This repository includes:
 - Sample fallback data
 - Public API integration logic
 - GitHub Pages custom domain configuration
+- Sanitized dashboard screenshots used as product evidence
 
 This repository does not include:
 
@@ -205,66 +215,26 @@ This architecture was intentionally designed for a nonprofit and community-event
 
 - Static frontend hosting reduces public hosting cost.
 - GitHub Pages provides free static hosting for the public website.
+- AWS Route 53 manages DNS for the custom domain.
 - Serverless backend services avoid maintaining always-on servers.
 - Google Sheets provides a practical admin dashboard for non-engineering workflows.
 - Firestore provides flexible persistence for event data and audit records.
-- Pay-as-you-go services are used only where operationally necessary.
+- Resend was used to move quickly under a tight client timeline.
+- AWS SES was evaluated and approved as a lower-cost pay-as-you-go alternative, but Resend remained in place because the email workflow was already implemented and production-ready.
+- Pay-as-you-go services are used where they provide clear operational value.
 
-## Screenshots
+## Evidence / Screenshots
 
-Placeholders:
+The screenshots below show sanitized evidence of the operational dashboard built in Google Sheets. The dashboard is interactive: admins can run controlled queries, review operational counts, and trigger workflows that interact with Firebase Cloud Functions and Firestore without exposing direct database access to public users.
 
-- Public progress page
-- Donation page
-- Admin dashboard concept
+### Public Progress Page
 
-Do not include private real data screenshots unless they are fully sanitized.
+![Public progress page](assets/5k_Donacion_Junelly.PNG)
 
-## Local Development
+### Admin Dashboard Overview
 
-Clone the repository:
+![Admin dashboard overview](assets/admin-dashboard-overview.png)
 
-```bash
-git clone https://github.com/Janiel777/abrazo-junelly-frontend.git
-cd abrazo-junelly-frontend
-```
+### Admin Query Controls
 
-Run a local static server:
-
-```bash
-python -m http.server 5500
-```
-
-Then open:
-
-```text
-http://127.0.0.1:5500/
-```
-
-The frontend can use `src/sample-data.js` as a fallback or connect to the public read-only API configured in `src/main.js`.
-
-## Deployment
-
-- Static frontend deployed through GitHub Pages.
-- Custom domain configured through GitHub Pages.
-- `CNAME` file included for `abrazojunelly.org`.
-- Backend deployed separately through Firebase Cloud Functions.
-- DNS records are managed outside this repository.
-
-## Future Improvements
-
-- Optional donor consent for public display names.
-- More advanced analytics.
-- Better admin reporting.
-- Automated public image generation for social media sharing.
-- Improved caching and monitoring.
-- CI/CD improvements for backend and frontend deployment.
-- Stronger operational alerts for unmatched payments and duplicate registrations.
-
-## Resume / Portfolio Value
-
-This project demonstrates full-stack system design, serverless backend development, public/private data separation, payment webhook handling, operational dashboard design, automation, deployment, and privacy-conscious engineering for a real deployed community platform.
-
-## Author
-
-Built by Janiel Núñez.
+![Admin query controls](assets/admin-dashboard-queries.png)

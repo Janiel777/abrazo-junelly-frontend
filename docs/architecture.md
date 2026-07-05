@@ -4,7 +4,7 @@ Abrazo Solidario Junelly is a production community fundraising and 5K registrati
 
 ```mermaid
 flowchart TD
-  donor[User / Donor] --> ath[ATH Movil / Aporta]
+  donor[User / Donor] --> ath[ATH Movil]
   ath --> webhook[Firebase Cloud Functions webhook]
   webhook --> firestore[(Firestore)]
 
@@ -18,8 +18,11 @@ flowchart TD
   api --> frontend[GitHub Pages frontend]
   frontend --> visitor[Public visitor]
 
-  functions --> emailProvider[Email provider]
-  emailProvider --> emails[Confirmation emails]
+  functions --> resend[Resend]
+  resend --> emails[Confirmation emails]
+
+  route53[AWS Route 53 DNS] --> domain[abrazojunelly.org]
+  domain --> frontend
 ```
 
 ## Public Frontend
@@ -36,6 +39,8 @@ Google Forms provides a low-friction registration flow for participants. Form su
 
 Google Sheets works as the operational dashboard. Apps Script adds automation for correction workflows, runner number assignment, duplicate handling, manual review, and dashboard actions.
 
+The dashboard also includes controlled query panels and action checkboxes that let admins inspect operational states and trigger backend workflows through Firebase Cloud Functions. This gives the team a practical interface for Firestore-backed operations without exposing direct database access.
+
 ## Backend
 
 Firebase Cloud Functions Gen 2 handles webhook processing, API routes, matching logic, email workflows, correction actions, and integration with Firestore.
@@ -46,8 +51,14 @@ Firestore stores registrations, donations, public summary data, email batches, a
 
 ## Payment / Donation Webhooks
 
-ATH Movil / Aporta webhook events are processed by backend functions. Donations can be matched to registrations, stored as extra donations, or marked for manual review depending on available information.
+ATH Movil webhook events are processed by backend functions. Donations can be matched to registrations, stored as extra donations, or marked for manual review depending on available information.
 
 ## Public API
 
 The public API returns sanitized aggregate data and paginated donation records. It is designed for public read-only access and excludes private operational data.
+
+## Infrastructure Notes
+
+The public frontend is served through GitHub Pages on the custom domain `abrazojunelly.org`. AWS Route 53 manages the hosted zone and DNS records for that domain.
+
+Confirmation email workflows currently use Resend. AWS SES was evaluated and approved as a lower-cost pay-as-you-go option, but Resend remained in production because the email workflow was already implemented under a tight client timeline.
