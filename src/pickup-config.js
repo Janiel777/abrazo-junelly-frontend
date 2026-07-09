@@ -14,6 +14,8 @@ export const PICKUP_FIREBASE_CONFIG = {
 
 export const PICKUP_PUBLIC_LOOKUP_URL =
   "https://us-east1-project-fbdd8e2e-e884-43f6-81c.cloudfunctions.net/publicPickupPass";
+export const PICKUP_PUBLIC_QR_IMAGE_URL =
+  "https://us-east1-project-fbdd8e2e-e884-43f6-81c.cloudfunctions.net/publicPickupQr";
 export const PICKUP_ADMIN_LOOKUP_URL =
   "https://us-east1-project-fbdd8e2e-e884-43f6-81c.cloudfunctions.net/adminLookupPickupPass";
 export const PICKUP_ADMIN_CONFIRM_URL =

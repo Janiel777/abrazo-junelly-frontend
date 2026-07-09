@@ -4,6 +4,7 @@ import {
   PICKUP_ADMIN_SEARCH_URL,
   PICKUP_MANUAL_CONFIRM_STRATEGY,
   PICKUP_MOCK_MODE,
+  PICKUP_PUBLIC_QR_IMAGE_URL,
   PICKUP_PUBLIC_LOOKUP_URL,
   PICKUP_TOKEN_RULES,
 } from "./pickup-config.js";
@@ -17,6 +18,7 @@ const mockRunner = {
   numberPickedUp: false,
   numberPickedUpAt: null,
 };
+const publicTrackingSources = new Set(["email", "qr", "direct"]);
 
 function hasConfiguredUrl(url) {
   return typeof url === "string" && url.startsWith("https://");
@@ -217,17 +219,29 @@ export async function confirmManualPickup(runner, authSession) {
   return postAdminJson(PICKUP_ADMIN_CONFIRM_URL, body, authSession, "PICKUP_ADMIN_CONFIRM_URL");
 }
 
-export async function lookupPublicPickupPass(token) {
+export async function lookupPublicPickupPass(token, source = "direct") {
+  const trackingSource = publicTrackingSources.has(source) ? source : "direct";
+
   if (PICKUP_MOCK_MODE) {
     await wait(350);
     return {
       ok: true,
       status: "VALID",
       pass: {
-        runnerNumber: mockRunner.runnerNumber,
-        displayName: mockRunner.displayName,
-        pickupCode: mockRunner.pickupCode,
-        numberPickedUp: false,
+        runners: [
+          {
+            runnerNumber: mockRunner.runnerNumber,
+            displayName: mockRunner.displayName,
+            pickupCode: mockRunner.pickupCode,
+            numberPickedUp: false,
+          },
+          {
+            runnerNumber: 208,
+            displayName: "Marisol V.",
+            pickupCode: "J208-DEMO",
+            numberPickedUp: true,
+          },
+        ],
       },
     };
   }
@@ -236,6 +250,7 @@ export async function lookupPublicPickupPass(token) {
 
   const url = new URL(PICKUP_PUBLIC_LOOKUP_URL);
   url.searchParams.set("t", token);
+  url.searchParams.set("source", trackingSource);
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -244,6 +259,11 @@ export async function lookupPublicPickupPass(token) {
   });
 
   return parseJsonResponse(response);
+}
+
+export function buildPublicQrImageUrl(token) {
+  const encodedToken = encodeURIComponent(String(token || ""));
+  return `${PICKUP_PUBLIC_QR_IMAGE_URL}?t=${encodedToken}&src=qr`;
 }
 
 function buildManualConfirmBody(runner) {
