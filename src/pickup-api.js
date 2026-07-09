@@ -72,11 +72,12 @@ export function getTokenFromInput(input) {
 
 async function parseJsonResponse(response) {
   let data;
+  let invalidJson = false;
 
   try {
     data = await response.json();
   } catch {
-    throw new Error("La API respondio con JSON invalido.");
+    invalidJson = true;
   }
 
   if (!response.ok) {
@@ -90,10 +91,14 @@ async function parseJsonResponse(response) {
     throw error;
   }
 
+  if (invalidJson) {
+    throw new Error("La API respondio con JSON invalido.");
+  }
+
   return data;
 }
 
-async function postJson(url, body, idToken, label) {
+async function postJsonWithToken(url, body, idToken, label) {
   assertConfigured(url, label);
 
   const response = await fetch(url, {
@@ -109,16 +114,31 @@ async function postJson(url, body, idToken, label) {
   return parseJsonResponse(response);
 }
 
-export async function lookupPickupPass(token, idToken) {
+async function postAdminJson(url, body, authSession, label) {
+  const idToken = await authSession.getIdToken();
+
+  try {
+    return await postJsonWithToken(url, body, idToken, label);
+  } catch (error) {
+    if (error.status !== 401 || typeof authSession.getFreshIdToken !== "function") {
+      throw error;
+    }
+
+    const freshIdToken = await authSession.getFreshIdToken();
+    return postJsonWithToken(url, body, freshIdToken, label);
+  }
+}
+
+export async function lookupPickupPass(token, authSession) {
   if (PICKUP_MOCK_MODE) {
     await wait(450);
     return buildMockLookup(token);
   }
 
-  return postJson(PICKUP_ADMIN_LOOKUP_URL, { token }, idToken, "PICKUP_ADMIN_LOOKUP_URL");
+  return postAdminJson(PICKUP_ADMIN_LOOKUP_URL, { token }, authSession, "PICKUP_ADMIN_LOOKUP_URL");
 }
 
-export async function confirmPickupByToken(token, idToken) {
+export async function confirmPickupByToken(token, authSession) {
   if (PICKUP_MOCK_MODE) {
     await wait(450);
     return {
@@ -133,10 +153,10 @@ export async function confirmPickupByToken(token, idToken) {
     };
   }
 
-  return postJson(PICKUP_ADMIN_CONFIRM_URL, { token }, idToken, "PICKUP_ADMIN_CONFIRM_URL");
+  return postAdminJson(PICKUP_ADMIN_CONFIRM_URL, { token }, authSession, "PICKUP_ADMIN_CONFIRM_URL");
 }
 
-export async function searchPickupRunners(query, idToken) {
+export async function searchPickupRunners(query, authSession) {
   const normalizedQuery = normalizeInput(query);
 
   if (PICKUP_MOCK_MODE) {
@@ -169,15 +189,15 @@ export async function searchPickupRunners(query, idToken) {
     };
   }
 
-  return postJson(
+  return postAdminJson(
     PICKUP_ADMIN_SEARCH_URL,
     { query: normalizedQuery },
-    idToken,
+    authSession,
     "PICKUP_ADMIN_SEARCH_URL",
   );
 }
 
-export async function confirmManualPickup(runner, idToken) {
+export async function confirmManualPickup(runner, authSession) {
   const body = buildManualConfirmBody(runner);
 
   if (PICKUP_MOCK_MODE) {
@@ -194,7 +214,7 @@ export async function confirmManualPickup(runner, idToken) {
     };
   }
 
-  return postJson(PICKUP_ADMIN_CONFIRM_URL, body, idToken, "PICKUP_ADMIN_CONFIRM_URL");
+  return postAdminJson(PICKUP_ADMIN_CONFIRM_URL, body, authSession, "PICKUP_ADMIN_CONFIRM_URL");
 }
 
 export async function lookupPublicPickupPass(token) {

@@ -59,6 +59,8 @@ The frontend performs a visual allow-list check for:
 
 This frontend check is not final authorization. The backend must verify the Firebase ID token and enforce the same authorization server-side.
 
+Administrative API calls use the cached Firebase ID token by default. If an administrative request returns HTTP 401, the frontend explicitly requests one fresh ID token and retries the request once. There are no retry loops.
+
 ## API URL Configuration
 
 Set these values in `src/pickup-config.js` after the backend is deployed:
@@ -251,6 +253,8 @@ The admin page uses `html5-qrcode@2.3.8` from a fixed CDN URL:
 
 It is loaded directly in the browser to keep the static site free of a bundler.
 
+The scanner uses `pause(true)` and `resume()` while a QR result is being verified or confirmed, so the camera can stay warm without repeatedly asking for permission. If pause/resume is unavailable or fails, the UI falls back to stop/start.
+
 ## Token Handling
 
 The scanner accepts:
@@ -330,6 +334,13 @@ rg -n "DASHBOARD_API_SECRET|service_account|private_key|firebase-admin|RUNNER_PI
 18. Frontend contains no secrets.
 19. Existing progress and donation pages still load.
 20. No email is sent.
+21. A confirmation response with `ok: true` and `status: "PICKUP_CONFIRMED"` shows the success state.
+22. A confirmation response with `ok: false` shows an error and does not clear the current QR token.
+23. A confirmation response with `status: "INVALID_TOKEN"` shows an error and never shows `Numero entregado`.
+24. An administrative HTTP 401 triggers exactly one fresh-token retry.
+25. Scanner pause/resume returns to scanning without a new camera permission prompt.
+26. Scanner stop/start fallback still works if pause/resume fails.
+27. The Google sign-in button is disabled before the auth controller finishes initializing.
 
 ## Explicit Restrictions
 

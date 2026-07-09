@@ -53,6 +53,7 @@ export async function createPickupAuthController(onStateChange) {
         onStateChange({ status: "signedOut" });
       },
       getIdToken: async () => "mock-firebase-id-token",
+      getFreshIdToken: async () => "mock-firebase-id-token-refreshed",
     };
   }
 
@@ -68,6 +69,9 @@ export async function createPickupAuthController(onStateChange) {
       },
       signOut: async () => {},
       getIdToken: async () => {
+        throw new Error("No hay sesion activa.");
+      },
+      getFreshIdToken: async () => {
         throw new Error("No hay sesion activa.");
       },
     };
@@ -126,6 +130,13 @@ export async function createPickupAuthController(onStateChange) {
     },
     signOut: () => signOut(auth),
     getIdToken: async () => {
+      if (!auth.currentUser) {
+        throw new Error("La sesion expiro. Inicia sesion nuevamente.");
+      }
+
+      return auth.currentUser.getIdToken();
+    },
+    getFreshIdToken: async () => {
       if (!auth.currentUser) {
         throw new Error("La sesion expiro. Inicia sesion nuevamente.");
       }

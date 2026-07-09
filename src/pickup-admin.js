@@ -41,8 +41,11 @@ const elements = {
 };
 
 let authController;
+let authReady = false;
+let lastAuthState = { status: "initializing" };
 let qrScanner;
 let scannerRunning = false;
+let scannerPaused = false;
 let busy = false;
 let currentToken = "";
 let pendingConfirm = null;
@@ -53,6 +56,7 @@ let searchTimer;
 init();
 
 async function init() {
+  elements.signInButton.disabled = true;
   elements.mockBanner.classList.toggle("is-hidden", !PICKUP_MOCK_MODE);
   if (PICKUP_MOCK_MODE) {
     elements.mockBanner.textContent = PICKUP_MOCK_WARNING;
@@ -60,10 +64,16 @@ async function init() {
 
   bindEvents();
   authController = await createPickupAuthController(handleAuthState);
+  authReady = true;
+  handleAuthState(lastAuthState);
 }
 
 function bindEvents() {
   elements.signInButton.addEventListener("click", () => {
+    if (!authController) {
+      return;
+    }
+
     authController.signIn().catch(() => {
       setAuthMessage("No se pudo iniciar sesion. Intenta nuevamente.");
     });
@@ -93,17 +103,23 @@ function bindEvents() {
     searchTimer = window.setTimeout(runManualSearch, SEARCH_DEBOUNCE_MS);
   });
 
-  elements.confirmCancelButton.addEventListener("click", closeConfirmDialog);
+  elements.confirmCancelButton.addEventListener("click", () => {
+    closeConfirmDialog();
+    resumeScanner();
+  });
   elements.confirmYesButton.addEventListener("click", runPendingConfirm);
 }
 
 function handleAuthState(state) {
+  lastAuthState = state;
+
   if (state.status === "authenticated") {
     elements.authCard.classList.add("is-hidden");
     elements.adminApp.classList.remove("is-hidden");
     elements.operatorEmail.textContent = state.user.email || "";
     setConnectionStatus("Listo", "ok");
     setAuthMessage("");
+    elements.signInButton.disabled = !authReady;
     renderEmptyState();
     return;
   }
@@ -119,7 +135,7 @@ function handleAuthState(state) {
     return;
   }
 
-  elements.signInButton.disabled = state.status === "configMissing";
+  elements.signInButton.disabled = !authReady || state.status === "configMissing";
   setAuthMessage(state.message || "Inicia sesion con una cuenta autorizada para continuar.");
 }
 
@@ -149,7 +165,12 @@ function setActiveTab(tab) {
 }
 
 async function startScanner() {
-  if (scannerRunning || busy) {
+  if ((scannerRunning && !scannerPaused) || busy) {
+    return;
+  }
+
+  if (scannerRunning && scannerPaused) {
+    await resumeScannerAnalysis();
     return;
   }
 
@@ -174,15 +195,58 @@ async function startScanner() {
       handleQrScan,
     );
     scannerRunning = true;
+    scannerPaused = false;
     setCameraStatus("Camara activa. Escanea un pase.", "ok");
   } catch {
     scannerRunning = false;
+    scannerPaused = false;
     setCameraStatus("No se pudo iniciar la camara. Usa la entrada manual.", "error");
   }
 }
 
+async function pauseScannerAnalysis() {
+  if (!qrScanner || !scannerRunning || scannerPaused) {
+    return;
+  }
+
+  try {
+    if (typeof qrScanner.pause === "function") {
+      qrScanner.pause(true);
+      scannerPaused = true;
+      setCameraStatus("Escaner pausado.", "busy");
+      return;
+    }
+  } catch {
+    // Fall back to stopping the camera below.
+  }
+
+  await stopScanner();
+}
+
+async function resumeScannerAnalysis() {
+  if (!qrScanner || !scannerRunning || !scannerPaused) {
+    await startScanner();
+    return;
+  }
+
+  try {
+    if (typeof qrScanner.resume === "function") {
+      qrScanner.resume();
+      scannerPaused = false;
+      setCameraStatus("Camara activa. Escanea un pase.", "ok");
+      return;
+    }
+  } catch {
+    // Fall back to a full restart below.
+  }
+
+  await stopScanner();
+  await startScanner();
+}
+
 async function stopScanner() {
   if (!qrScanner || !scannerRunning) {
+    scannerPaused = false;
     setCameraStatus("Camara detenida", "neutral");
     return;
   }
@@ -193,6 +257,7 @@ async function stopScanner() {
     // The camera may already be stopped by the browser.
   } finally {
     scannerRunning = false;
+    scannerPaused = false;
     setCameraStatus("Camara detenida", "neutral");
   }
 }
@@ -200,7 +265,7 @@ async function stopScanner() {
 async function resumeScanner() {
   clearResult();
   currentToken = "";
-  await startScanner();
+  await resumeScannerAnalysis();
 }
 
 function setCameraStatus(message, tone) {
@@ -224,14 +289,14 @@ async function verifyTokenInput(value) {
   const validation = getTokenFromInput(value);
 
   if (!validation.ok) {
-    await stopScanner();
+    await pauseScannerAnalysis();
     currentToken = "";
     renderInvalidState(validation.error);
     return;
   }
 
   currentToken = validation.token;
-  await stopScanner();
+  await pauseScannerAnalysis();
   await verifyCurrentToken();
 }
 
@@ -245,8 +310,7 @@ async function verifyCurrentToken() {
   renderLoadingState("Verificando QR...");
 
   try {
-    const idToken = await authController.getIdToken();
-    const result = await lookupPickupPass(currentToken, idToken);
+    const result = await lookupPickupPass(currentToken, authController);
     renderLookupResult(result);
     setConnectionStatus("Listo", "ok");
   } catch (error) {
@@ -377,14 +441,19 @@ async function runPendingConfirm() {
   renderLoadingState("Confirmando entrega...");
 
   try {
-    const idToken = await authController.getIdToken();
     const result =
       pending.source === "manual"
-        ? await confirmManualPickup(pending.runner, idToken)
-        : await confirmPickupByToken(currentToken, idToken);
+        ? await confirmManualPickup(pending.runner, authController)
+        : await confirmPickupByToken(currentToken, authController);
 
-    if (result.status === "ALREADY_PICKED_UP") {
+    if (result?.ok === true && result.status === "ALREADY_PICKED_UP") {
       renderAlreadyPickedUp(result.runner || pending.runner);
+      return;
+    }
+
+    if (result?.ok !== true || result.status !== "PICKUP_CONFIRMED" || !result.runner) {
+      failed = true;
+      renderConnectionError("La API no confirmo la entrega. Verifica el pase e intenta nuevamente.");
       return;
     }
 
@@ -426,8 +495,7 @@ async function runManualSearch() {
   elements.searchResults.replaceChildren(createNoticeCard("Buscando...", "Consultando coincidencias.", "busy"));
 
   try {
-    const idToken = await authController.getIdToken();
-    const result = await searchPickupRunners(query, idToken);
+    const result = await searchPickupRunners(query, authController);
     renderSearchResults(Array.isArray(result.results) ? result.results : []);
   } catch (error) {
     elements.searchResults.replaceChildren(createNoticeCard("Error de busqueda", error.message, "error"));
