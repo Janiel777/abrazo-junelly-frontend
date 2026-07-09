@@ -88,6 +88,11 @@ input {
   padding: clamp(1.25rem, 5vw, 2rem);
 }
 
+.public-pass-card {
+  width: min(100%, 34rem);
+  background: #fff;
+}
+
 .auth-card h1,
 .pass-card h1,
 .notice-card h2,
@@ -371,6 +376,120 @@ input {
 .runner-name {
   font-size: clamp(1.55rem, 7vw, 3rem);
   text-transform: uppercase;
+}
+
+.public-pass-title {
+  text-align: center;
+}
+
+.public-qr {
+  display: grid;
+  justify-items: center;
+  padding: 0.85rem;
+  border: 1px solid #ffd8be;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.public-qr img {
+  display: block;
+  width: min(100%, 21rem);
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 12px;
+}
+
+.public-qr-error {
+  color: var(--pickup-red);
+  font-weight: 900;
+  text-align: center;
+}
+
+.public-pass-instruction {
+  color: var(--pickup-muted);
+  font-size: 1.02rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.public-runner-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.public-runner-block {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--pickup-border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.public-runner-block.picked-up {
+  border-color: #f8df99;
+  background: var(--pickup-yellow-soft);
+}
+
+.public-runner-block .public-runner-number {
+  font-size: clamp(2.25rem, 12vw, 4rem);
+}
+
+.public-runner-name {
+  margin: 0;
+  font-size: clamp(1.25rem, 5vw, 2rem);
+  line-height: 1.05;
+}
+
+.public-picked-up-status {
+  width: fit-content;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  color: var(--pickup-yellow);
+  background: #fff;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.public-pickup-logistics {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem;
+  border: 1px solid #ffd8be;
+  border-radius: 16px;
+  background: var(--pickup-orange-soft);
+}
+
+.public-pickup-logistics h2,
+.public-pickup-logistics p {
+  margin: 0;
+}
+
+.public-pickup-logistics h2 {
+  font-size: 1.15rem;
+}
+
+.public-pickup-logistics strong {
+  color: var(--pickup-orange-dark);
+}
+
+.public-pickup-place {
+  margin-top: 0.35rem !important;
+  color: var(--pickup-ink);
+  font-weight: 900;
+}
+
+.fundraising-link {
+  display: block;
+  min-height: 3.15rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid #f7c5a5;
+  border-radius: 14px;
+  color: var(--pickup-orange-dark);
+  background: #fff;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
 }
 
 .runner-detail,

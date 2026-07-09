@@ -67,6 +67,7 @@ Set these values in `src/pickup-config.js` after the backend is deployed:
 
 ```js
 export const PICKUP_PUBLIC_LOOKUP_URL = "https://...";
+export const PICKUP_PUBLIC_QR_IMAGE_URL = "https://...";
 export const PICKUP_ADMIN_LOOKUP_URL = "https://...";
 export const PICKUP_ADMIN_CONFIRM_URL = "https://...";
 export const PICKUP_ADMIN_SEARCH_URL = "https://...";
@@ -222,11 +223,32 @@ It can be changed later to `runnerNumber` if the backend contract chooses that s
 Request:
 
 ```http
-GET PICKUP_PUBLIC_LOOKUP_URL?t=TOKEN
+GET PICKUP_PUBLIC_LOOKUP_URL?t=TOKEN&source=email
 Accept: application/json
 ```
 
+Allowed tracking sources are `email`, `qr`, and `direct`. If the public page receives no `src` parameter, or an unsupported value, it sends `direct`. Invalid tokens are rejected before the lookup call, so no visit is registered for invalid token shapes.
+
 Valid response:
+
+```json
+{
+  "ok": true,
+  "status": "VALID",
+  "pass": {
+    "runners": [
+      {
+        "runnerNumber": 136,
+        "displayName": "Ivan L.",
+        "pickupCode": "J136-AF2A8",
+        "numberPickedUp": false
+      }
+    ]
+  }
+}
+```
+
+Legacy individual response shape is also supported:
 
 ```json
 {
@@ -242,6 +264,12 @@ Valid response:
 ```
 
 The public page never confirms pickup and never shows private fields.
+
+The QR image is loaded from the project endpoint, not from an external QR generation service:
+
+```http
+GET PICKUP_PUBLIC_QR_IMAGE_URL?t=TOKEN&src=qr
+```
 
 ## QR Library
 
