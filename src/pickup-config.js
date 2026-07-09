@@ -6,7 +6,7 @@ export const PICKUP_ALLOWED_ADMIN_EMAILS = [
 export const PICKUP_MOCK_MODE = false;
 
 export const PICKUP_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDzabLj1tL_-wIyPnDiXNoNEIEfs2rT2SA",
+  apiKey: "",
   authDomain: "project-fbdd8e2e-e884-43f6-81c.firebaseapp.com",
   projectId: "project-fbdd8e2e-e884-43f6-81c",
   appId: "1:723401665439:web:138ac596d3aa0a3eaa6baa",
