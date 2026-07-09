@@ -122,14 +122,12 @@ function normalizeRunners(pass) {
   if (
     pass.runnerNumber ||
     pass.displayName ||
-    pass.pickupCode ||
     typeof pass.numberPickedUp === "boolean"
   ) {
     return [
       {
         runnerNumber: pass.runnerNumber,
         displayName: pass.displayName,
-        pickupCode: pass.pickupCode,
         numberPickedUp: pass.numberPickedUp,
       },
     ];
@@ -144,7 +142,6 @@ function createRunnerBlock(runner) {
 
   appendTextTo(block, "strong", "public-runner-number", `#${runner.runnerNumber || "--"}`);
   appendTextTo(block, "h2", "public-runner-name", runner.displayName || "Participante");
-  appendTextTo(block, "p", "public-code", `Código de recogido: ${runner.pickupCode || "No disponible"}`);
 
   if (runner.numberPickedUp) {
     appendTextTo(block, "p", "public-picked-up-status", "Número ya entregado");
@@ -163,7 +160,13 @@ function createPickupLogistics() {
   appendTextTo(logistics, "strong", "", "5:00 p. m. - 7:00 p. m.");
   appendTextTo(logistics, "p", "", "Domingo 12 de julio");
   appendTextTo(logistics, "strong", "", "5:00 a. m. - 6:25 a. m.");
-  appendTextTo(logistics, "p", "public-pickup-place", "Centro Agropecuario de San Sebastián");
+  const placeLink = document.createElement("a");
+  placeLink.className = "public-pickup-place";
+  placeLink.href = "https://go.abrazojunelly.org/ubicacion";
+  placeLink.target = "_blank";
+  placeLink.rel = "noopener noreferrer";
+  placeLink.textContent = "Centro Agropecuario de San Sebastián";
+  logistics.append(placeLink);
 
   return logistics;
 }
