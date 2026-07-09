@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Verificacion administrativa de pases QR para entrega de numeros de corredor."
+    >
+    <title>Entrega de numeros | Abrazo Solidario Junelly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="../../src/pickup.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  </head>
+  <body class="pickup-page">
+    <header class="pickup-header">
+      <a href="../../index.html">Abrazo Solidario Junelly</a>
+      <span>Entrega de numeros</span>
+    </header>
+
+    <main class="pickup-shell">
+      <section class="pickup-card auth-card" id="auth-card">
+        <p class="pickup-eyebrow">Acceso administrativo</p>
+        <h1>Verificar pases QR</h1>
+        <p id="auth-message">Inicia sesion con una cuenta autorizada para continuar.</p>
+        <button class="pickup-button primary" type="button" id="sign-in-button" disabled>
+          Iniciar sesion con Google
+        </button>
+      </section>
+
+      <section class="pickup-app is-hidden" id="admin-app" aria-label="Panel de entrega">
+        <div class="operator-bar">
+          <div>
+            <span class="status-pill" id="connection-status">Listo</span>
+            <strong id="operator-email"></strong>
+          </div>
+          <button class="pickup-button ghost small" type="button" id="sign-out-button">
+            Cerrar sesion
+          </button>
+        </div>
+
+        <div class="mock-banner is-hidden" id="mock-banner">MODO DE PRUEBA</div>
+
+        <nav class="pickup-tabs" aria-label="Modos de verificacion">
+          <button class="tab-button active" type="button" data-tab="scanner">Escanear QR</button>
+          <button class="tab-button" type="button" data-tab="manual">Buscar sin QR</button>
+        </nav>
+
+        <section class="tab-panel" id="scanner-panel">
+          <div class="scanner-card">
+            <div class="scanner-topline">
+              <span id="camera-status">Camara detenida</span>
+              <button class="pickup-button ghost small" type="button" id="stop-scanner-button">
+                Detener
+              </button>
+            </div>
+            <div id="qr-reader" class="qr-reader" aria-label="Lector de QR"></div>
+            <div class="scanner-actions">
+              <button class="pickup-button primary" type="button" id="start-scanner-button">
+                Iniciar camara
+              </button>
+              <button class="pickup-button secondary" type="button" id="resume-scanner-button">
+                Reanudar escaner
+              </button>
+            </div>
+          </div>
+
+          <form class="manual-token-form" id="manual-token-form">
+            <label for="manual-token-input">Pegar URL o token si la camara falla</label>
+            <div>
+              <input
+                id="manual-token-input"
+                type="text"
+                autocomplete="off"
+                inputmode="text"
+                placeholder="https://abrazojunelly.org/p/?t=..."
+              >
+              <button class="pickup-button secondary" type="submit">Verificar</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="tab-panel is-hidden" id="manual-panel">
+          <form class="search-form" id="search-form">
+            <label for="runner-search-input">Buscar por numero, nombre o ultimos 4 digitos</label>
+            <input
+              id="runner-search-input"
+              type="search"
+              autocomplete="off"
+              inputmode="search"
+              placeholder="Ej. 136, Ivan, 3018"
+            >
+          </form>
+          <div class="search-results" id="search-results"></div>
+        </section>
+
+        <section class="result-region" id="result-region" aria-live="polite"></section>
+      </section>
+    </main>
+
+    <div class="confirm-overlay is-hidden" id="confirm-overlay" role="dialog" aria-modal="true">
+      <div class="confirm-dialog">
+        <h2>Confirmar entrega</h2>
+        <p id="confirm-message"></p>
+        <button class="pickup-button primary" type="button" id="confirm-yes-button">
+          Si, confirmar entrega
+        </button>
+        <button class="pickup-button ghost" type="button" id="confirm-cancel-button">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="toast-region" id="toast-region" aria-live="assertive"></div>
+
+    <script type="module" src="../../src/pickup-admin.js"></script>
+  </body>
+</html>
