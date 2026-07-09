@@ -77,7 +77,7 @@ function renderValidPass(pass) {
 
   const qrImage = document.createElement("img");
   qrImage.src = buildPublicQrImageUrl(currentToken);
-  qrImage.alt = "Codigo QR del pase digital";
+  qrImage.alt = "Código QR del pase digital";
   qrImage.width = 320;
   qrImage.height = 320;
   qrImage.loading = "eager";
@@ -144,10 +144,10 @@ function createRunnerBlock(runner) {
 
   appendTextTo(block, "strong", "public-runner-number", `#${runner.runnerNumber || "--"}`);
   appendTextTo(block, "h2", "public-runner-name", runner.displayName || "Participante");
-  appendTextTo(block, "p", "public-code", `Codigo de recogido: ${runner.pickupCode || "No disponible"}`);
+  appendTextTo(block, "p", "public-code", `Código de recogido: ${runner.pickupCode || "No disponible"}`);
 
   if (runner.numberPickedUp) {
-    appendTextTo(block, "p", "public-picked-up-status", "Numero ya entregado");
+    appendTextTo(block, "p", "public-picked-up-status", "Número ya entregado");
   }
 
   return block;
@@ -156,14 +156,14 @@ function createRunnerBlock(runner) {
 function createPickupLogistics() {
   const logistics = document.createElement("section");
   logistics.className = "public-pickup-logistics";
-  logistics.setAttribute("aria-label", "Informacion de entrega");
+  logistics.setAttribute("aria-label", "Información de entrega");
 
-  appendTextTo(logistics, "h2", "", "Entrega de numeros");
-  appendTextTo(logistics, "p", "", "Sabado 11 de julio");
+  appendTextTo(logistics, "h2", "", "Entrega de números");
+  appendTextTo(logistics, "p", "", "Sábado 11 de julio");
   appendTextTo(logistics, "strong", "", "5:00 p. m. - 7:00 p. m.");
   appendTextTo(logistics, "p", "", "Domingo 12 de julio");
   appendTextTo(logistics, "strong", "", "5:00 a. m. - 6:25 a. m.");
-  appendTextTo(logistics, "p", "public-pickup-place", "Centro Agropecuario de San Sebastian");
+  appendTextTo(logistics, "p", "public-pickup-place", "Centro Agropecuario de San Sebastián");
 
   return logistics;
 }
@@ -172,7 +172,7 @@ function createFundraisingLink() {
   const link = document.createElement("a");
   link.className = "fundraising-link";
   link.href = "https://abrazojunelly.org/";
-  link.textContent = "Ver progreso de la recaudacion";
+  link.textContent = "Ver progreso de la recaudación";
   return link;
 }
 
