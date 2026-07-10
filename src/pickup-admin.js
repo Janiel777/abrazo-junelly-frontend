@@ -48,6 +48,7 @@ let scannerRunning = false;
 let scannerPaused = false;
 let busy = false;
 let currentToken = "";
+let currentPickupPass = null;
 let pendingConfirm = null;
 let lastScanValue = "";
 let lastScanAt = 0;
@@ -265,6 +266,7 @@ async function stopScanner() {
 async function resumeScanner() {
   clearResult();
   currentToken = "";
+  currentPickupPass = null;
   await resumeScannerAnalysis();
 }
 
@@ -324,7 +326,13 @@ async function verifyCurrentToken() {
 function renderLookupResult(result) {
   if (!result || result.ok === false || result.status === "INVALID_TOKEN") {
     currentToken = "";
+    currentPickupPass = null;
     renderInvalidState("Pase no valido.");
+    return;
+  }
+
+  if (result.pass) {
+    renderPickupPass(result.pass);
     return;
   }
 
@@ -382,7 +390,6 @@ function renderValidRunner(runner, source) {
   appendText(card, "strong", "runner-number", `#${safeRunnerNumber(runner)}`);
   appendText(card, "h2", "runner-name", String(runner.fullName || "Nombre no disponible"));
   appendText(card, "p", "runner-detail", `Telefono ****${runner.phoneLast4 || "----"}`);
-  appendText(card, "p", "runner-detail", `Codigo ${runner.pickupCode || "No disponible"}`);
 
   const actions = document.createElement("div");
   actions.className = "result-actions";
@@ -392,6 +399,156 @@ function renderValidRunner(runner, source) {
   );
   card.append(actions);
   elements.resultRegion.replaceChildren(card);
+}
+
+function renderPickupPass(pass) {
+  const normalizedPass = normalizePickupPass(pass);
+  currentPickupPass = normalizedPass;
+
+  if (!normalizedPass.runners.length) {
+    renderConnectionError("El pase no contiene corredores para mostrar.");
+    return;
+  }
+
+  const card = document.createElement("article");
+  card.className = "pickup-pass-card";
+
+  appendText(card, "p", "pickup-status", getPickupPassStatusLabel(normalizedPass));
+  appendText(
+    card,
+    "h2",
+    "pickup-pass-title",
+    normalizedPass.passType === "GROUP" ? "Pase grupal" : "Pase individual",
+  );
+
+  const summary = document.createElement("p");
+  summary.className = "runner-detail";
+  summary.textContent = `${getPendingRunners(normalizedPass).length} pendiente(s) de ${normalizedPass.runners.length}`;
+  card.append(summary);
+
+  const actions = document.createElement("div");
+  actions.className = "group-pickup-actions";
+
+  const selectAllButton = createActionButton("Seleccionar todos los pendientes", "secondary", () => {
+    selectPendingRunners(card);
+  });
+  selectAllButton.disabled = getPendingRunners(normalizedPass).length === 0;
+
+  const confirmButton = createActionButton("Confirmar seleccionados", "primary", () => {
+    const selectedRunners = getSelectedPendingRunners(card, currentPickupPass);
+    openConfirmDialog(selectedRunners, "qr-pass");
+  });
+  confirmButton.dataset.role = "confirm-selected";
+  confirmButton.disabled = true;
+
+  actions.append(selectAllButton, confirmButton);
+
+  const list = document.createElement("div");
+  list.className = "admin-runner-list";
+
+  normalizedPass.runners.forEach((runner) => {
+    list.append(createPickupRunnerCard(runner, normalizedPass.runners.length === 1));
+  });
+
+  card.append(actions, list);
+
+  if (getPendingRunners(normalizedPass).length === 0) {
+    const doneActions = document.createElement("div");
+    doneActions.className = "result-actions";
+    doneActions.append(createActionButton("Volver a escanear", "primary", resumeScanner));
+    card.append(doneActions);
+  }
+
+  elements.resultRegion.replaceChildren(card);
+  updateSelectedRunnerState(card);
+}
+
+function normalizePickupPass(pass) {
+  const runners = Array.isArray(pass?.runners) ? pass.runners : [];
+
+  return {
+    passId: pass?.passId || null,
+    passType: pass?.passType || (runners.length > 1 ? "GROUP" : "INDIVIDUAL"),
+    runners: runners.filter(Boolean),
+  };
+}
+
+function createPickupRunnerCard(runner, shouldPreselect) {
+  const isPickedUp = Boolean(runner.numberPickedUp);
+  const card = document.createElement("label");
+  card.className = `admin-runner-card${isPickedUp ? " picked-up" : ""}`;
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.className = "runner-select-checkbox";
+  checkbox.value = runner.registrationId || "";
+  checkbox.disabled = isPickedUp || !runner.registrationId;
+  checkbox.checked = shouldPreselect && !checkbox.disabled;
+  checkbox.addEventListener("change", () => {
+    const passCard = checkbox.closest(".pickup-pass-card");
+    if (passCard) {
+      updateSelectedRunnerState(passCard);
+    }
+  });
+
+  const body = document.createElement("div");
+  body.className = "admin-runner-card-body";
+  appendText(body, "strong", "admin-runner-number", `#${safeRunnerNumber(runner)}`);
+  appendText(body, "span", "admin-runner-name", runner.fullName || "Nombre no disponible");
+  appendText(body, "span", "admin-runner-phone", `Telefono ****${runner.phoneLast4 || "----"}`);
+
+  if (isPickedUp) {
+    appendText(body, "span", "admin-picked-up-status", "NÚMERO YA ENTREGADO");
+  }
+
+  card.append(checkbox, body);
+  return card;
+}
+
+function selectPendingRunners(passCard) {
+  passCard.querySelectorAll(".runner-select-checkbox:not(:disabled)").forEach((checkbox) => {
+    checkbox.checked = true;
+  });
+  updateSelectedRunnerState(passCard);
+}
+
+function updateSelectedRunnerState(passCard) {
+  const selectedCount = passCard.querySelectorAll(".runner-select-checkbox:checked:not(:disabled)").length;
+  const confirmButton = passCard.querySelector('[data-role="confirm-selected"]');
+
+  if (confirmButton) {
+    confirmButton.disabled = selectedCount === 0;
+  }
+}
+
+function getSelectedPendingRunners(passCard, pass) {
+  const selectedIds = new Set(
+    Array.from(passCard.querySelectorAll(".runner-select-checkbox:checked:not(:disabled)")).map(
+      (checkbox) => checkbox.value,
+    ),
+  );
+
+  return pass.runners.filter(
+    (runner) => selectedIds.has(runner.registrationId) && !runner.numberPickedUp,
+  );
+}
+
+function getPendingRunners(pass) {
+  return pass.runners.filter((runner) => !runner.numberPickedUp);
+}
+
+function getPickupPassStatusLabel(pass) {
+  const pendingCount = getPendingRunners(pass).length;
+
+  if (pendingCount === 0) {
+    return "NÚMERO YA ENTREGADO";
+  }
+
+  if (pendingCount < pass.runners.length) {
+    return "PARCIALMENTE ENTREGADO";
+  }
+
+  return "PASE VÁLIDO";
 }
 
 function renderAlreadyPickedUp(runner) {
@@ -414,13 +571,28 @@ function renderAlreadyPickedUp(runner) {
   elements.resultRegion.replaceChildren(card);
 }
 
-function openConfirmDialog(runner, source) {
-  pendingConfirm = { runner, source };
-  elements.confirmMessage.textContent = `Confirmar que entregaste el numero ${safeRunnerNumber(runner)} a ${
-    runner.fullName || "este participante"
-  }?`;
+function openConfirmDialog(runners, source) {
+  const selectedRunners = Array.isArray(runners) ? runners : [runners];
+  if (!selectedRunners.length) {
+    return;
+  }
+
+  pendingConfirm = { runners: selectedRunners, source };
+  elements.confirmMessage.textContent = getConfirmMessage(selectedRunners);
   elements.confirmOverlay.classList.remove("is-hidden");
   elements.confirmYesButton.focus();
+}
+
+function getConfirmMessage(runners) {
+  if (runners.length === 1) {
+    const runner = runners[0];
+    return `Confirmar entrega del número ${safeRunnerNumber(runner)} a ${
+      runner.fullName || "este participante"
+    }?`;
+  }
+
+  const runnerNumbers = runners.map((runner) => safeRunnerNumber(runner)).join(", ");
+  return `Confirmar entrega de ${runners.length} números: ${runnerNumbers}?`;
 }
 
 function closeConfirmDialog() {
@@ -443,21 +615,40 @@ async function runPendingConfirm() {
   try {
     const result =
       pending.source === "manual"
-        ? await confirmManualPickup(pending.runner, authController)
-        : await confirmPickupByToken(currentToken, authController);
+        ? await confirmManualPickup(pending.runners[0], authController)
+        : await confirmPickupByToken(
+            currentToken,
+            pending.runners.map((runner) => runner.registrationId).filter(Boolean),
+            authController,
+          );
 
     if (result?.ok === true && result.status === "ALREADY_PICKED_UP") {
-      renderAlreadyPickedUp(result.runner || pending.runner);
+      if (result.pass) {
+        renderPickupPass(result.pass);
+        return;
+      }
+
+      renderAlreadyPickedUp(result.runner || pending.runners[0]);
       return;
     }
 
-    if (result?.ok !== true || result.status !== "PICKUP_CONFIRMED" || !result.runner) {
+    if (result?.ok !== true || result.status !== "PICKUP_CONFIRMED") {
       failed = true;
       renderConnectionError("La API no confirmo la entrega. Verifica el pase e intenta nuevamente.");
       return;
     }
 
-    const runner = result.runner || pending.runner;
+    if (pending.source !== "manual" && result.pass) {
+      renderPickupPass(result.pass);
+      showToast(`${result.newlyConfirmedCount || pending.runners.length} numero(s) entregado(s)`);
+
+      if (getPendingRunners(normalizePickupPass(result.pass)).length === 0) {
+        currentToken = "";
+      }
+      return;
+    }
+
+    const runner = result.runner || result.pass?.runners?.[0] || pending.runners[0];
     showToast(`Numero ${safeRunnerNumber(runner)} entregado`);
     currentToken = "";
     renderConfirmedState(runner);
