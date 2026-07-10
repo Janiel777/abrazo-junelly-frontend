@@ -729,4 +729,8 @@ input {
   .scanner-actions {
     display: grid;
   }
+
+  .group-pickup-actions {
+    grid-template-columns: 1fr;
+  }
 }

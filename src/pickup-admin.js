@@ -4,7 +4,7 @@ import {
   getTokenFromInput,
   lookupPickupPass,
   searchPickupRunners,
-} from "./pickup-api.js";
+} from "./pickup-api.js?v=20260709-3";
 import { PICKUP_MOCK_MODE, PICKUP_MOCK_WARNING } from "./pickup-config.js";
 import { createPickupAuthController } from "./pickup-auth.js";
 
