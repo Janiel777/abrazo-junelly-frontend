@@ -378,6 +378,99 @@ input {
   text-transform: uppercase;
 }
 
+.pickup-pass-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid var(--pickup-border);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--pickup-shadow);
+}
+
+.pickup-pass-title {
+  margin: 0;
+  font-size: clamp(1.4rem, 6vw, 2.2rem);
+}
+
+.group-pickup-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.admin-runner-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.admin-runner-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem;
+  border: 2px solid var(--pickup-border);
+  border-radius: 16px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.admin-runner-card:has(.runner-select-checkbox:checked) {
+  border-color: var(--pickup-orange);
+  background: var(--pickup-orange-soft);
+}
+
+.admin-runner-card.picked-up {
+  cursor: default;
+  border-color: #f8df99;
+  background: var(--pickup-yellow-soft);
+}
+
+.runner-select-checkbox {
+  width: 1.65rem;
+  height: 1.65rem;
+  accent-color: var(--pickup-orange);
+}
+
+.runner-select-checkbox:disabled {
+  opacity: 0.45;
+}
+
+.admin-runner-card-body {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.admin-runner-number {
+  color: var(--pickup-orange);
+  font-size: clamp(2rem, 12vw, 3.8rem);
+  font-weight: 900;
+  line-height: 0.95;
+}
+
+.admin-runner-name {
+  color: var(--pickup-ink);
+  font-size: 1.1rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.admin-runner-phone {
+  color: var(--pickup-muted);
+  font-weight: 800;
+}
+
+.admin-picked-up-status {
+  width: fit-content;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  color: var(--pickup-yellow);
+  background: #fff;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
 .public-pass-title {
   text-align: center;
 }
@@ -626,6 +719,7 @@ input {
   .operator-bar,
   .scanner-topline,
   .scanner-actions,
+  .group-pickup-actions,
   .manual-token-form > div {
     align-items: stretch;
     flex-direction: column;
@@ -634,5 +728,9 @@ input {
 
   .scanner-actions {
     display: grid;
+  }
+
+  .group-pickup-actions {
+    grid-template-columns: 1fr;
   }
 }

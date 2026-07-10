@@ -10,11 +10,11 @@ import {
 } from "./pickup-config.js";
 
 const mockRunner = {
+  registrationId: "reg_mock_136",
   runnerNumber: 136,
   fullName: "Alex Rivera Torres",
   displayName: "Alex R.",
   phoneLast4: "3018",
-  pickupCode: "J136-DEMO",
   numberPickedUp: false,
   numberPickedUpAt: null,
 };
@@ -140,22 +140,47 @@ export async function lookupPickupPass(token, authSession) {
   return postAdminJson(PICKUP_ADMIN_LOOKUP_URL, { token }, authSession, "PICKUP_ADMIN_LOOKUP_URL");
 }
 
-export async function confirmPickupByToken(token, authSession) {
+export async function confirmPickupByToken(token, registrationIds, authSession) {
+  const selectedRegistrationIds = Array.isArray(registrationIds) ? registrationIds : [];
+
   if (PICKUP_MOCK_MODE) {
     await wait(450);
-    return {
-      ok: true,
-      status: "PICKUP_CONFIRMED",
-      runner: {
-        ...mockRunner,
+    const pass = buildMockPass(token);
+    const confirmed = new Set(selectedRegistrationIds);
+    const newlyConfirmedCount = pass.runners.filter(
+      (runner) => confirmed.has(runner.registrationId) && !runner.numberPickedUp,
+    ).length;
+    const runners = pass.runners.map((runner) => {
+      if (!confirmed.has(runner.registrationId) || runner.numberPickedUp) {
+        return runner;
+      }
+
+      return {
+        ...runner,
         numberPickedUp: true,
         numberPickedUpAt: new Date().toISOString(),
         numberPickedUpBy: "mock-admin@example.com",
+      };
+    });
+
+    return {
+      ok: true,
+      status: newlyConfirmedCount > 0 ? "PICKUP_CONFIRMED" : "ALREADY_PICKED_UP",
+      pass: {
+        ...pass,
+        runners,
       },
+      confirmedRegistrationIds: selectedRegistrationIds,
+      newlyConfirmedCount,
     };
   }
 
-  return postAdminJson(PICKUP_ADMIN_CONFIRM_URL, { token }, authSession, "PICKUP_ADMIN_CONFIRM_URL");
+  return postAdminJson(
+    PICKUP_ADMIN_CONFIRM_URL,
+    { token, registrationIds: selectedRegistrationIds },
+    authSession,
+    "PICKUP_ADMIN_CONFIRM_URL",
+  );
 }
 
 export async function searchPickupRunners(query, authSession) {
@@ -172,7 +197,6 @@ export async function searchPickupRunners(query, authSession) {
               runnerNumber: 136,
               fullName: "Alex Rivera Torres",
               phoneLast4: "3018",
-              pickupCode: "J136-DEMO",
               numberPickedUp: false,
               numberPickedUpAt: null,
             },
@@ -181,7 +205,6 @@ export async function searchPickupRunners(query, authSession) {
               runnerNumber: 208,
               fullName: "Marisol Vega Cruz",
               phoneLast4: "8844",
-              pickupCode: "J208-DEMO",
               numberPickedUp: true,
               numberPickedUpAt: "2026-07-12T10:42:00.000Z",
               numberPickedUpBy: "mock-admin@example.com",
@@ -232,13 +255,11 @@ export async function lookupPublicPickupPass(token, source = "direct") {
           {
             runnerNumber: mockRunner.runnerNumber,
             displayName: mockRunner.displayName,
-            pickupCode: mockRunner.pickupCode,
             numberPickedUp: false,
           },
           {
             runnerNumber: 208,
             displayName: "Marisol V.",
-            pickupCode: "J208-DEMO",
             numberPickedUp: true,
           },
         ],
@@ -275,16 +296,14 @@ function buildManualConfirmBody(runner) {
 }
 
 function buildMockLookup(token) {
+  const pass = buildMockPass(token);
+
   if (token.toLowerCase().includes("picked")) {
     return {
       ok: true,
       status: "ALREADY_PICKED_UP",
-      runner: {
-        ...mockRunner,
-        numberPickedUp: true,
-        numberPickedUpAt: "2026-07-12T10:42:00.000Z",
-        numberPickedUpBy: "mock-admin@example.com",
-      },
+      pass,
+      runner: pass.runners[0],
     };
   }
 
@@ -298,8 +317,54 @@ function buildMockLookup(token) {
 
   return {
     ok: true,
-    status: "VALID",
-    runner: mockRunner,
+    status: pass.runners.some((runner) => runner.numberPickedUp) ? "PARTIALLY_PICKED_UP" : "VALID",
+    pass,
+    runner: pass.runners.length === 1 ? pass.runners[0] : undefined,
+  };
+}
+
+function buildMockPass(token) {
+  const isGroup = token.toLowerCase().includes("group");
+  const isPicked = token.toLowerCase().includes("picked");
+  const isPartial = token.toLowerCase().includes("partial");
+  const baseRunner = {
+    ...mockRunner,
+    numberPickedUp: isPicked,
+    numberPickedUpAt: isPicked ? "2026-07-12T10:42:00.000Z" : null,
+    numberPickedUpBy: isPicked ? "mock-admin@example.com" : null,
+  };
+
+  if (!isGroup) {
+    return {
+      passId: "mock_pass_individual_136",
+      passType: "INDIVIDUAL",
+      runners: [baseRunner],
+    };
+  }
+
+  return {
+    passId: "mock_pass_group_9998",
+    passType: "GROUP",
+    runners: [
+      {
+        registrationId: "reg_pickup_test_group_9998",
+        runnerNumber: 9998,
+        fullName: "Maria Rodriguez",
+        phoneLast4: "9998",
+        numberPickedUp: isPicked || isPartial,
+        numberPickedUpAt: isPicked || isPartial ? "2026-07-12T10:42:00.000Z" : null,
+        numberPickedUpBy: isPicked || isPartial ? "mock-admin@example.com" : null,
+      },
+      {
+        registrationId: "reg_pickup_test_group_9997",
+        runnerNumber: 9997,
+        fullName: "Luis Rivera",
+        phoneLast4: "9997",
+        numberPickedUp: isPicked,
+        numberPickedUpAt: isPicked ? "2026-07-12T10:45:00.000Z" : null,
+        numberPickedUpBy: isPicked ? "mock-admin@example.com" : null,
+      },
+    ],
   };
 }
 
